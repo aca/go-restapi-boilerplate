@@ -8,7 +8,7 @@ This includes extremely simple boilerplate and example for
 - contextual, structured logging
 - orm
 - access control
-- monitoring
+- metrics
 - graceful shutdown
 - configuration through flag, env. (no files, but viper also can load configuration from files)
 - ...
@@ -30,11 +30,10 @@ Usage
 
 ---
 
-There's only two methods. Check [spec/swagger.yaml](spec/swagger.yaml)
 ```
 go run cmd/api/main.go
 ```
-
+Boilerplate includes CRUD for user as example. Check [spec/swagger.yaml](spec/swagger.yaml)
 ```
  » http 'localhost:8080/api/v1/user' user_name=aca user_id=acadx0
 {
@@ -42,8 +41,7 @@ go run cmd/api/main.go
     "user_id": "acadx0",
     "user_name": "aca"
 }
-```
-```
+
  » http 'localhost:8080/api/v1/user/acadx0'
 {
     "id": 1,

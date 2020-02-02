@@ -39,3 +39,34 @@ func (s *server) ReadUser(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, u)
 	return
 }
+
+func (s *server) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log.Ctx(ctx).Debug().Msg("DeleteUser")
+	uid := chi.URLParam(r, "userID")
+	_, err := s.db.User.Delete().Where(user.UserIDEQ(uid)).Exec(ctx)
+	if err != nil {
+		render.Render(w, r, ErrServerError(r, err))
+		return
+	}
+	return
+}
+
+func (s *server) PatchUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log.Ctx(ctx).Debug().Msg("PatchUser")
+
+	u := &ent.User{}
+	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
+		render.Render(w, r, ErrInvalidRequest(r, err))
+	}
+
+	uid := chi.URLParam(r, "userID")
+	_, err := s.db.User.Update().Where(user.UserIDEQ(uid)).SetUserName(u.UserName).Save(ctx)
+	if err != nil {
+		render.Render(w, r, ErrServerError(r, err))
+		return
+	}
+	render.JSON(w, r, u)
+	return
+}

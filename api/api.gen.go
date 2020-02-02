@@ -19,8 +19,12 @@ import (
 type ServerInterface interface {
 	// create user (POST /api/v1/user)
 	CreateUser(w http.ResponseWriter, r *http.Request)
+	// delete user (DELETE /api/v1/user/{userID})
+	DeleteUser(w http.ResponseWriter, r *http.Request)
 	// get user (GET /api/v1/user/{userID})
 	ReadUser(w http.ResponseWriter, r *http.Request)
+	// patch user (PATCH /api/v1/user/{userID})
+	PatchUser(w http.ResponseWriter, r *http.Request)
 }
 
 // CreateUser operation middleware
@@ -32,8 +36,52 @@ func CreateUserCtx(next http.Handler) http.Handler {
 	})
 }
 
+// DeleteUser operation middleware
+func DeleteUserCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		var err error
+
+		// ------------- Path parameter "userID" -------------
+		var userID string
+
+		err = runtime.BindStyledParameter("simple", false, "userID", chi.URLParam(r, "userID"), &userID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter userID: %s", err), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, "userID", userID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 // ReadUser operation middleware
 func ReadUserCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		var err error
+
+		// ------------- Path parameter "userID" -------------
+		var userID string
+
+		err = runtime.BindStyledParameter("simple", false, "userID", chi.URLParam(r, "userID"), &userID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter userID: %s", err), http.StatusBadRequest)
+			return
+		}
+
+		ctx = context.WithValue(ctx, "userID", userID)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// PatchUser operation middleware
+func PatchUserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -66,8 +114,16 @@ func HandlerFromMux(si ServerInterface, r *chi.Mux) http.Handler {
 		r.Post("/api/v1/user", si.CreateUser)
 	})
 	r.Group(func(r chi.Router) {
+		r.Use(DeleteUserCtx)
+		r.Delete("/api/v1/user/{userID}", si.DeleteUser)
+	})
+	r.Group(func(r chi.Router) {
 		r.Use(ReadUserCtx)
 		r.Get("/api/v1/user/{userID}", si.ReadUser)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(PatchUserCtx)
+		r.Patch("/api/v1/user/{userID}", si.PatchUser)
 	})
 
 	return r
@@ -76,14 +132,14 @@ func HandlerFromMux(si ServerInterface, r *chi.Mux) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xTTY/UMAz9K8hwrCYzgDjkCOxhhBDSij2hFQqpp+tV84HjjjSq+t+R03YZlkHiAIhL",
-	"mzi2n/2ePYJPIaeIUQrYEYq/w+Dq8Yr5GktOsaBeM6eMLIT1MZROf3LKCBaKMMUOpgYYvw5Y5DO1F56n",
-	"ZrWkL/foRQOOu81NQf4ZYc5wSBycgAWK8uolPCSgKNgha4ahIF/GW96iC/hb1aiJ4iGpc08el87neHi/",
-	"/6gphaTXq6aGBo7IhVIEC7vNdrNVj5Qxukxg4UU1NZCd3NWmjMtkjjszrC2nIvrXxp1QivsWLLxhdII3",
-	"M8DC6OvUntTTpygYa5DLuSdfw8x90RpW/fT0jPEAFp6a7wKbRV2zkl47VgBibMEKD1gNs+q14ufb7R+D",
-	"PZ+oCt1i8UxZZgI/vINqO7ihl38FesWcuA5DGUJwfAILvvL/ZFFYXFfAfoLK2K16nqtoRv3u305aR4cX",
-	"1LxG1z5o+ZeY/UHQ/5TVDuUXlOqCsAsoyGoegTSHLg006/bNLMPjcW3O6n2837fTNH0LAAD//6sA4e/g",
-	"BAAA",
+	"H4sIAAAAAAAC/+xUTY/TMBD9K2jgGDUtIA4+wu6hQgi0Yk9ohYwzTb1KbDOeVKqq/Hc0k2SpNi3isIIe",
+	"9tLYz/P53nQO4GKbYsDAGcwBsttia/V4TXSDOcWQUa6JYkJij/rY5lo+vE8IBjKTDzX0BRD+7DDzd1+d",
+	"eO6LCYk/7tGxOOxWi9uMNM8wRNhEai2DAR/43Vt4COADY40kEbqMdDrf+BZsi39VjUA+bKIYN97h2Png",
+	"D5/WXyUke27kKqGhgB1S9jGAgdViuViKRUwYbPJg4I1CBSTLW22qtMmXu1XZTS3HzPKVxi37GNYVGPhA",
+	"aBlvhwQjo+9jtRdLFwNjUCebUuOdupX3WWqY9JPTK8INGHhZ/ha4HNUtJ9K1Y0ngCSswTB0qMKiuFb9e",
+	"Lp8s7fFEaeoKsyOfeCDw80dQbGO7hv9V0muiSDoMuWtbS3sw4JT/F6PCbOsM5hsoY3dieaxieZDf9VUv",
+	"dVTYIONc0CvFHwSd03uhRAz9nCGigBpPDO8N2uoPnT79/F4odzXyWeKSJdsiIwl8AC8xZEdAMS2bYajg",
+	"8b+zOKr38Tq70z3jtnNJvgj8vE7+1ySoKue2Sd//CgAA///HPVDsgwcAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
