@@ -87,9 +87,9 @@ Here are the libraries I chose. Some of them are relatively new and may not be m
 
 
 - **Web Framework.** net/http with [chi](https://github.com/go-chi/chi)  
-  I don't want to learn another framework because I never thought I need it. I believe net/http is enough and complete when writing http service in go. Only thing it lacks is probably router and few helper functions / middlewares. chi has 100% compatibility with net/http. gorilla/mux is more famous for this but, as oapi-codegen only supports chi, I just use chi. If you use standard net/http handler. 
+  I don't want to learn another framework because I never thought I need it. I believe net/http is enough and complete when writing http service in go. Only thing it lacks is probably router and few helper functions / middlewares. chi has 100% compatibility with net/http. gorilla/mux is more famous for this but, as oapi-codegen only supports chi, I just use chi. 
 
-  It is extremely simple to integrate with third party middlewares like [rs/cors](https://github.com/rs/cors), [zerolog](https://github.com/rs/zerolog).
+  If you use standard net/http handler, It is extremely simple to integrate with third party middlewares like [rs/cors](https://github.com/rs/cors), [zerolog](https://github.com/rs/zerolog).
 
 
 - **ORM.**  [facebookincubator/ent](https://github.com/facebookincubator/ent)  
