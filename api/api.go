@@ -59,34 +59,34 @@ func NewServer(ctx context.Context, v *viper.Viper) (*server, error) {
 
 	// routers, middlewares
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(hlog.NewHandler(log.Logger))
-	r.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
-		hlog.FromRequest(r).Info().
-			Str("method", r.Method).
-			Str("url", r.URL.String()).
-			Int("status", status).
-			Int("size", size).
-			Dur("duration", duration).
-			Msg("")
-	}))
-	r.Use(hlog.RemoteAddrHandler("ip"))
-	r.Use(hlog.UserAgentHandler("user_agent"))
-	r.Use(hlog.RefererHandler("referer"))
 
-	// If you are service is behind load balancer like nginx, you might want to
-	// use X-Request-ID instead of injecting request id. You can do some thing
-	// like this,
-	// r.Use(hlog.CustomHeaderHandler("reqId", "X-Request-Id"))
-	r.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
-
-
-	r.Use(mwMetrics)
-
-	// There's open pr for https://github.com/deepmap/oapi-codegen/pull/124
-	// If it gets merged, We might can make much flexible router 
 	r.Handle("/metrics", promhttp.Handler())
-	s.root = HandlerFromMux(s, r)
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.Recoverer)
+		r.Use(hlog.NewHandler(log.Logger))
+		r.Use(hlog.AccessHandler(func(r *http.Request, status, size int, duration time.Duration) {
+			hlog.FromRequest(r).Info().
+				Str("method", r.Method).
+				Str("url", r.URL.String()).
+				Int("status", status).
+				Int("size", size).
+				Dur("duration", duration).
+				Msg("")
+		}))
+		r.Use(hlog.RemoteAddrHandler("ip"))
+		r.Use(hlog.UserAgentHandler("user_agent"))
+		r.Use(hlog.RefererHandler("referer"))
+
+		// If you are service is behind load balancer like nginx, you might want to
+		// use X-Request-ID instead of injecting request id. You can do some thing
+		// like this,
+		// r.Use(hlog.CustomHeaderHandler("reqId", "X-Request-Id"))
+		r.Use(hlog.RequestIDHandler("req_id", "Request-Id"))
+		r.Use(mwMetrics)
+		r.Handle("/", HandlerFromMux(s, r))
+	})
+	s.root = r
 
 	return s, nil
 }

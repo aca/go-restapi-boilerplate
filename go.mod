@@ -3,7 +3,7 @@ module github.com/aca/go-restapi-boilerplate
 go 1.13
 
 require (
-	github.com/deepmap/oapi-codegen v1.3.4
+	github.com/deepmap/oapi-codegen v1.3.5-0.20200206142458-d22ad467e649
 	github.com/facebookincubator/ent v0.0.0-20200130190510-c70f1017e3fc
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/ghodss/yaml v1.0.0
