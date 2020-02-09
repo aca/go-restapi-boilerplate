@@ -18,11 +18,13 @@ func (s *server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	u := &ent.User{}
 	if err := json.NewDecoder(r.Body).Decode(u); err != nil {
 		render.Render(w, r, ErrInvalidRequest(r, err))
+		return
 	}
 
 	u, err := s.db.User.Create().SetUserID(u.UserID).SetUserName(u.UserName).Save(ctx)
 	if err != nil {
 		render.Render(w, r, ErrServerError(r, err))
+		return
 	}
 	render.JSON(w, r, u)
 }
