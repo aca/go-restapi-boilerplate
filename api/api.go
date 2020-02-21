@@ -4,6 +4,7 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -86,9 +87,18 @@ func NewServer(ctx context.Context, v *viper.Viper) (*server, error) {
 		r.Use(mwMetrics)
 		r.Handle("/", HandlerFromMux(s, r))
 	})
+
+	// health check
+	r.HandleFunc("/ping", ping)
+
 	s.root = r
 
 	return s, nil
+}
+
+// ping is handler responding to health-check request
+func ping(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, "pong")
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
