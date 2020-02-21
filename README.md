@@ -11,6 +11,8 @@ This includes extremely simple boilerplate and example for
 - metrics
 - graceful shutdown
 - configuration through flag, env. (no files, but viper also can load configuration from files)
+- docker image: [acadx0/go-restapi-boilerplate](https://hub.docker.com/repository/docker/acadx0/go-restapi-boilerplate)
+- kubernetes deploy with kustomize
 - ...
 
 
@@ -27,9 +29,6 @@ Usage
 - **Write Spec First**, check details below
 - ```go generate ./...``` 
 - write your code.
-
----
-
 ```
 go run cmd/api/main.go
 ```
@@ -48,6 +47,12 @@ Boilerplate includes CRUD for user as example. Check [spec/swagger.yaml](spec/sw
     "user_id": "acadx0",
     "user_name": "aca"
 }
+```
+
+---
+Define kubernetes spec with kustomize, check [deploy](deploy).
+```
+kustomize build prod | kubectl apply -f -
 ```
 
 

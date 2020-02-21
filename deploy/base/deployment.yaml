@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: api
+  template:
+    metadata:
+      labels:
+        run: api
+    spec:
+      containers:
+      - image: acadx0/go-restapi-boilerplate:latest
+        imagePullPolicy: Always
+        name: api
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
