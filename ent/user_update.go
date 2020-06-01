@@ -16,8 +16,8 @@ import (
 // UserUpdate is the builder for updating User entities.
 type UserUpdate struct {
 	config
-	user_id    *string
-	user_name  *string
+	hooks      []Hook
+	mutation   *UserMutation
 	predicates []predicate.User
 }
 
@@ -29,24 +29,48 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 
 // SetUserID sets the user_id field.
 func (uu *UserUpdate) SetUserID(s string) *UserUpdate {
-	uu.user_id = &s
+	uu.mutation.SetUserID(s)
 	return uu
 }
 
 // SetUserName sets the user_name field.
 func (uu *UserUpdate) SetUserName(s string) *UserUpdate {
-	uu.user_name = &s
+	uu.mutation.SetUserName(s)
 	return uu
 }
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
-	if uu.user_name != nil {
-		if err := user.UserNameValidator(*uu.user_name); err != nil {
+	if v, ok := uu.mutation.UserName(); ok {
+		if err := user.UserNameValidator(v); err != nil {
 			return 0, fmt.Errorf("ent: validator failed for field \"user_name\": %v", err)
 		}
 	}
-	return uu.sqlSave(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(uu.hooks) == 0 {
+		affected, err = uu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*UserMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			uu.mutation = mutation
+			affected, err = uu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(uu.hooks) - 1; i >= 0; i-- {
+			mut = uu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, uu.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -89,22 +113,24 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value := uu.user_id; value != nil {
+	if value, ok := uu.mutation.UserID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldUserID,
 		})
 	}
-	if value := uu.user_name; value != nil {
+	if value, ok := uu.mutation.UserName(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldUserName,
 		})
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{user.Label}
+		} else if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return 0, err
@@ -115,31 +141,54 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UserUpdateOne is the builder for updating a single User entity.
 type UserUpdateOne struct {
 	config
-	id        int
-	user_id   *string
-	user_name *string
+	hooks    []Hook
+	mutation *UserMutation
 }
 
 // SetUserID sets the user_id field.
 func (uuo *UserUpdateOne) SetUserID(s string) *UserUpdateOne {
-	uuo.user_id = &s
+	uuo.mutation.SetUserID(s)
 	return uuo
 }
 
 // SetUserName sets the user_name field.
 func (uuo *UserUpdateOne) SetUserName(s string) *UserUpdateOne {
-	uuo.user_name = &s
+	uuo.mutation.SetUserName(s)
 	return uuo
 }
 
 // Save executes the query and returns the updated entity.
 func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
-	if uuo.user_name != nil {
-		if err := user.UserNameValidator(*uuo.user_name); err != nil {
+	if v, ok := uuo.mutation.UserName(); ok {
+		if err := user.UserNameValidator(v); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"user_name\": %v", err)
 		}
 	}
-	return uuo.sqlSave(ctx)
+	var (
+		err  error
+		node *User
+	)
+	if len(uuo.hooks) == 0 {
+		node, err = uuo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*UserMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			uuo.mutation = mutation
+			node, err = uuo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(uuo.hooks) - 1; i >= 0; i-- {
+			mut = uuo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, uuo.mutation); err != nil {
+			return nil, err
+		}
+	}
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -170,23 +219,27 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  uuo.id,
 				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		},
 	}
-	if value := uuo.user_id; value != nil {
+	id, ok := uuo.mutation.ID()
+	if !ok {
+		return nil, fmt.Errorf("missing User.ID for update")
+	}
+	_spec.Node.ID.Value = id
+	if value, ok := uuo.mutation.UserID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldUserID,
 		})
 	}
-	if value := uuo.user_name; value != nil {
+	if value, ok := uuo.mutation.UserName(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldUserName,
 		})
 	}
@@ -194,7 +247,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 	_spec.Assign = u.assignValues
 	_spec.ScanValues = u.scanValues()
 	if err = sqlgraph.UpdateNode(ctx, uuo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{user.Label}
+		} else if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
