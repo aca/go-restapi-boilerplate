@@ -1,4 +1,5 @@
-//go:generate oapi-codegen --package=api --generate chi-server,spec -o api.gen.go ../spec/swagger.yaml
+//go:generate echo "oapi-codegen"
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate chi-server,spec -o api.gen.go ../spec/swagger.yaml
 
 package api
 

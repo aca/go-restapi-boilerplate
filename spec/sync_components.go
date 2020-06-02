@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"io/ioutil"
 
 	"github.com/aca/go-restapi-boilerplate/api"
 	"github.com/aca/go-restapi-boilerplate/ent"
@@ -18,26 +18,43 @@ func main() {
 
 	// User
 	userSchema, _, err := openapi3gen.NewSchemaRefForValue(&ent.User{})
-	CheckErr(err)
+	checkErr(err)
 
 	errResponseSchema, _, err := openapi3gen.NewSchemaRefForValue(&api.ErrResponse{})
-	CheckErr(err)
+	checkErr(err)
 
 	components.Schemas = make(map[string]*openapi3.SchemaRef)
 	components.Schemas["v1.User"] = userSchema
 	components.Schemas["ErrResponse"] = errResponseSchema
 
+	type Swagger struct {
+		Components openapi3.Components `json:"components,omitempty" yaml:"components,omitempty"`
+	}
+
+	swagger := Swagger{}
+	swagger.Components = components
+
 	b := &bytes.Buffer{}
-	err = json.NewEncoder(b).Encode(components.Schemas)
-	CheckErr(err)
+	err = json.NewEncoder(b).Encode(swagger)
+	checkErr(err)
 
-	y, err := yaml.JSONToYAML(b.Bytes())
-	CheckErr(err)
+	schema, err := yaml.JSONToYAML(b.Bytes())
+	checkErr(err)
 
-	fmt.Println(string(y))
+	paths, err := ioutil.ReadFile("./path.yaml")
+
+	b = &bytes.Buffer{}
+	b.Write(schema)
+	b.Write(paths)
+
+	_, err = openapi3.NewSwaggerLoader().LoadSwaggerFromData(b.Bytes())
+	checkErr(err)
+
+	err = ioutil.WriteFile("swagger.yaml", b.Bytes(), 0666)
+	checkErr(err)
 }
 
-func CheckErr(err error) {
+func checkErr(err error) {
 	if err != nil {
 		panic(err)
 	}

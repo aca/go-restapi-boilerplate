@@ -1,0 +1,19 @@
+components:
+  schemas:
+    ErrResponse:
+      properties:
+        msg:
+          type: string
+        request_id:
+          type: string
+      type: object
+    v1.User:
+      properties:
+        id:
+          format: int64
+          type: integer
+        user_id:
+          type: string
+        user_name:
+          type: string
+      type: object

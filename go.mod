@@ -3,7 +3,7 @@ module github.com/aca/go-restapi-boilerplate
 go 1.13
 
 require (
-	github.com/deepmap/oapi-codegen v1.3.8
+	github.com/deepmap/oapi-codegen v1.3.9-0.20200528015920-0ffcccea80dc
 	github.com/facebookincubator/ent v0.2.2
 	github.com/getkin/kin-openapi v0.9.0
 	github.com/ghodss/yaml v1.0.0
@@ -14,5 +14,7 @@ require (
 	github.com/rs/zerolog v1.18.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+	golang.org/x/net v0.0.0-20200602114024-627f9648deb9 // indirect
+	golang.org/x/sys v0.0.0-20200602100848-8d3cce7afc34 // indirect
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

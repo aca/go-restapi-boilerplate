@@ -15,18 +15,9 @@ This includes extremely simple boilerplate and example for
 - kubernetes deploy with kustomize
 - ...
 
-
-Prerequisites
----
-For developments, you need to install these tools.
-```
-go get github.com/facebookincubator/ent/cmd/entc
-go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-```
-
 Usage
 ---
-- **Write Spec First**, check details below
+- **Write spec first** (check details below)
 - ```go generate ./...``` 
 - write your code.
 ```
@@ -88,7 +79,9 @@ Here are the libraries I chose. Some of them are relatively new and may not be m
 
   For server code generation, [go-swagger](https://github.com/go-swagger/go-swagger) seems popular and mature. But It doesn't support openapi spec v3(*might not matter that much*), and I find it too complicated. [oapi-codegen](https://github.com/deepmap/oapi-codegen) on the otherhand, generates extremely simple go code that you probably won't even have to read the document. It just generates types, and server interface in the name of "OperationID" in your spec.
 
-  In this boilerplate, I only generate chi-server, with no types([api/api.go#L1](api/api.go#L1)) because I just use ent generated model. Check [spec/ent_to_components.go](spec/ent_to_components.go) to see how to use [kin-openapi](https://github.com/getkin/kin-openapi) and generate openapi components from go struct. 
+  In this boilerplate, I generate "openapi components" from ent model. 
+  And based on updated [swagger.yaml](./spec/swagger.yaml), generate chi-server (but with no types because I just directly use ent generated model).  
+  So when [path.yaml](spec/path.yaml) or ent/schema is updated, run ```go generate ./...``` to generate code.
 
 
 - **Web Framework.** net/http with [chi](https://github.com/go-chi/chi)  
